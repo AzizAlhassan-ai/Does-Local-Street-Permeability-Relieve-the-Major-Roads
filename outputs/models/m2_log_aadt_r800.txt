@@ -1,0 +1,29 @@
+M2: y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + perm_z
+
+n=2803  cells=613
+ICC=0.1649
+
+            Mixed Linear Model Regression Results
+==============================================================
+Model:              MixedLM   Dependent Variable:   y         
+No. Observations:   2803      Method:               REML      
+No. Groups:         613       Scale:                0.3070    
+Min. group size:    1         Log-Likelihood:       -2527.9731
+Max. group size:    26        Converged:            Yes       
+Mean group size:    4.6                                       
+--------------------------------------------------------------
+                   Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+--------------------------------------------------------------
+Intercept          10.156    0.028 368.977 0.000 10.102 10.210
+C(f_system)[T.4]   -0.668    0.034 -19.833 0.000 -0.734 -0.602
+C(f_system)[T.5]   -1.528    0.037 -41.846 0.000 -1.600 -1.456
+pop_density_km2_z   0.042    0.018   2.294 0.022  0.006  0.077
+lu_entropy_z       -0.007    0.013  -0.556 0.578 -0.033  0.019
+dist_cbd_km_c_z     0.066    0.026   2.572 0.010  0.016  0.116
+dist_cbd_km_c_sq_z  0.016    0.019   0.844 0.399 -0.021  0.053
+median_year_z      -0.042    0.021  -2.008 0.045 -0.082 -0.001
+through_lanes_z     0.274    0.015  17.913 0.000  0.244  0.304
+perm_z             -0.249    0.029  -8.698 0.000 -0.306 -0.193
+Group Var           0.061    0.016                            
+==============================================================
+

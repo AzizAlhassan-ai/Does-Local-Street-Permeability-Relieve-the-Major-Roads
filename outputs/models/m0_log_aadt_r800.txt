@@ -1,0 +1,20 @@
+M0: y ~ 1
+
+n=2803  cells=613
+ICC=0.2001
+
+         Mixed Linear Model Regression Results
+========================================================
+Model:            MixedLM Dependent Variable: y         
+No. Observations: 2803    Method:             REML      
+No. Groups:       613     Scale:              0.8979    
+Min. group size:  1       Log-Likelihood:     -4040.7823
+Max. group size:  26      Converged:          Yes       
+Mean group size:  4.6                                   
+--------------------------------------------------------
+              Coef. Std.Err.    z    P>|z| [0.025 0.975]
+--------------------------------------------------------
+Intercept     9.341    0.028 334.048 0.000  9.286  9.395
+Group Var     0.225    0.029                            
+========================================================
+

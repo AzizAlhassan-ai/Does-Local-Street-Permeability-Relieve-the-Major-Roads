@@ -1,0 +1,7 @@
+model,formula,n,cells,icc,var_cell,var_resid,loglike
+M0,y ~ 1,2803,613,0.2001087850324475,0.22461654948093107,0.8978556570466817,-4040.782265852871
+M1,y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system),2803,613,0.16120713477481952,0.06073477832000851,0.31601516146922753,-2562.6679282536043
+M2,y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + perm_z,2803,613,0.16491724083034479,0.06063633336086211,0.3070410122918007,-2527.9730873259923
+M2g,y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + gen_z,2803,613,0.15951249391525923,0.05986616220377119,0.3154408794852328,-2561.2301002766053
+M2b,y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + perm_z + gen_z,2803,613,0.1649138280578327,0.060588749986976886,0.3068076697100382,-2529.5736103262443
+M3,y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + perm_z + access_controlled + betw_z + perm_z:access_controlled + perm_z:betw_z,2803,613,0.16043504996094993,0.05674359304778932,0.29694216989242095,-2485.416929475765

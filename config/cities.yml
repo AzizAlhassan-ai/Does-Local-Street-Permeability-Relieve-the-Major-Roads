@@ -1,0 +1,424 @@
+# Per-city parameters. Adding a city = adding a block here, not editing code.
+# All URLs below were live-verified on 2026-07-30 (see notes/data-provenance.md).
+
+denver:
+  label: "Denver–Aurora, CO"
+  role: pilot
+
+  # Analytic extent. DECISION D-005: the 2020 Census Urban Area, not the municipality.
+  # City & County of Denver alone is overwhelmingly gridded, which would collapse
+  # variance in the key predictor. The UA includes the cul-de-sac suburbs
+  # (Aurora, Centennial, Highlands Ranch, Lakewood) that supply the contrast.
+  extent:
+    type: urban_area
+    uace20: "23527"                      # verified: "Denver--Aurora, CO Urban Area"
+    area_land_m2: 1669545145             # verified from TIGERweb, ~1670 km²
+    tiger_uac_url: "https://www2.census.gov/geo/tiger/TIGER2023/UAC/tl_2023_us_uac20.zip"
+
+  network_culture: "gridded pre-war core, curvilinear post-1970 periphery"
+  states:
+    - fips: "08"
+      abbrev: co
+      tiger_dir: 08_COLORADO
+      hpms_name: Colorado
+  state_fips: "08"          # legacy single-state field, kept for back-compat
+  # Counties with at least one tract intersecting the Denver–Aurora UA.
+  # VERIFIED empirically by 01b_census_geography.py (2026-07-30): 661 tracts,
+  # 8 counties. Boulder (013) and Weld (123) were not anticipated — they contribute
+  # only fringe tracts that touch the UA edge. This list is informational; tract
+  # selection is spatial, not by county code.
+  county_fips: ["001", "005", "013", "014", "031", "035", "059", "123"]
+  county_names:
+    "001": Adams
+    "005": Arapahoe
+    "013": Boulder          # fringe only
+    "014": Broomfield
+    "031": Denver
+    "035": Douglas
+    "059": Jefferson
+    "123": Weld             # fringe only
+
+  # Monocentric-distance anchor for the distance-to-CBD control.
+  # Denver Civic Center / downtown core. Documented as an analyst choice, not a
+  # derived value; sensitivity to this point is checked in Stage 5.
+  cbd:
+    lat: 39.7392
+    lon: -104.9903
+    note: "Civic Center, downtown Denver"
+
+  # --- Dependent variable: major-road AADT -----------------------------------
+  aadt:
+    primary:
+      name: "FHWA HPMS Public Release 2018 — Colorado"
+      service: "https://geo.dot.gov/server/rest/services/Hosted/Colorado_2018_PR/FeatureServer/0"
+      geometry: polyline
+      records_statewide: 127545          # verified
+      records_denver_bbox_ua: 17469       # verified: exact count for the UA bbox
+      records_in_ua_polygon: 13839        # verified: after clipping to the UA polygon
+      vintage: 2018
+      access: open
+      key_fields: [aadt, f_system, through_lanes, speed_limit, ownership, facility_type, nhs, urban_code]
+      note: >
+        Covers the full Federal-aid system (functional class 1-5), so it includes
+        city-maintained arterials and collectors, not just state highways. Carries
+        speed_limit and through_lanes, which directly supply the H2 moderator and the
+        per-lane outcome normalization. Schema is identical across all 50 states
+        (<State>_2018_PR), which is what makes multi-city scaling tractable.
+    validation:
+      name: "CDOT Traffic (All Years) — 2024 segment midpoints"
+      service: "https://services.arcgis.com/yzB9WM8W0BO3Ql7d/arcgis/rest/services/TraffonAllYrs_gdb/FeatureServer/0"
+      geometry: point
+      records_statewide: 3261            # verified
+      records_denver_bbox: 618           # verified
+      vintage: 2024
+      access: open
+      key_fields: [AADT, AADTYR, ROUTE, ROUTECAPAC, VCRATIO, COUNTSTATIONID]
+      note: >
+        STATE HIGHWAYS ONLY — not a substitute for HPMS. Two uses: (a) check whether
+        2018 HPMS AADT is still representative by comparing overlapping segments to
+        2024 counts; (b) supply ROUTECAPAC/VCRATIO as an independent capacity measure.
+        Service exposes 56 layers, one per year 1997-2024, enabling a longitudinal
+        extension (proposal §7).
+    unavailable:
+      - name: "City & County of Denver AADT"
+        status: "DOES NOT EXIST as open data"
+        note: >
+          Denver's open-data portal (342 datasets, catalog checked 2026-07-30) publishes
+          Street Centerlines and Traffic Signals but NO traffic-count/AADT layer.
+          This is why HPMS, not city data, is the outcome source.
+
+  # --- Street network -------------------------------------------------------
+  network:
+    source: "OpenStreetMap via OSMnx (Overpass API)"
+    access: open
+    note: "No key required. Cached under data/cache/osmnx."
+
+  # --- Controls -------------------------------------------------------------
+  census:
+    # DECISION D-013 (OQ-3): ACS 2020 5-year is PRIMARY.
+    # Its 2016-2020 window is centred on 2018 — the HPMS vintage — AND it is the
+    # earliest ACS release using 2020-vintage tracts, so it joins cleanly to the
+    # TIGER 2023 tract geometry already downloaded.
+    # Verified empirically 2026-07-30 by CO tract counts per ACS year:
+    #   ACS 2018/2019 5-yr -> 1,249 tracts (2010-vintage geography)
+    #   ACS 2020-2023 5-yr -> 1,447 tracts (2020-vintage, == TIGER2023)
+    # Using ACS 2018 would have forced a 2010-vintage tract download and risked a
+    # silent GEOID mismatch. Caveat to report: the 2016-2020 window includes 2020,
+    # so commute/vehicle variables (B08201) carry some COVID distortion; the
+    # structural variables (population, housing units, year built) are unaffected.
+    acs_year: 2020
+    acs_year_robustness: 2023      # currency check, run in Stage 4
+    acs_dataset: "acs/acs5"
+    api_base: "https://api.census.gov/data"
+    requires_key: true                   # verified 2026-07-30: keyless requests 302 -> missing_key.html
+    key_signup: "https://api.census.gov/data/key_signup.html"
+    # TIGER 2023 tracts are 2020-vintage (1,447 in CO) and therefore match ACS 2020+.
+    tract_geometry_url: "https://www2.census.gov/geo/tiger/TIGER2023/TRACT/tl_2023_08_tract.zip"
+    tract_vintage: 2020
+    tract_geometry_requires_key: false   # verified: HTTP 200, keyless
+    variables:
+      B01003_001E: total_population
+      B25001_001E: housing_units
+      B25035_001E: median_year_structure_built   # vintage control — see PLAN.md D-006
+      B08201_001E: households_total
+      B08201_002E: households_no_vehicle
+      B25010_001E: avg_household_size
+
+  land_use:
+    lodes:
+      name: "LEHD LODES v8 — Colorado Workplace Area Characteristics"
+      url_pattern: "https://lehd.ces.census.gov/data/lodes/LODES8/co/wac/co_wac_S000_JT00_{year}.csv.gz"
+      # Year chosen to match HPMS 2018 and the D-013 logic.
+      year: 2018
+      access: open
+      requires_key: false
+      # VERIFIED 2026-07-30: HTTP 200; years 2018-2022 all present in LODES8/co/wac.
+      # 0 of 48,826 w_geocode values unmatched against tl_2020_08_tabblock20, which
+      # confirms LODES8 is on 2020-vintage blocks (consistent with D-013).
+      status: verified
+      total_jobs_field: C000
+      block_key_field: w_geocode
+      entropy_min_sectors: 2
+      # LODES WAC is at census-block resolution, which is the right scale for a
+      # land-use mix measure inside an 800 m buffer (tracts are far too coarse).
+      # Block *centroids* come from the TIGER block DBF as INTPTLAT20/INTPTLON20
+      # (key GEOID20 -- note the vintage suffix), read WITHOUT opening the .shp,
+      # so the heavy polygon geometry is skipped entirely.
+      # CAVEAT: UACE20/UR20/UATYPE20 are NULL throughout TIGER2020PL (released
+      # 2021-01-22, before the 2020 urban-area delineation), so there is NO
+      # block-level cross-check on urban-area membership -- point-in-polygon is
+      # the sole assignment. State this in the methods.
+      block_geometry_url: "https://www2.census.gov/geo/tiger/TIGER2020PL/STATE/08_COLORADO/08/tl_2020_08_tabblock20.zip"
+      # Entropy is computed over the CNS01..CNS20 NAICS-sector job counts ONLY.
+      # (An earlier comment here said "plus housing units" -- LODES WAC contains no
+      # housing variable, so that was wrong. Adding a housing term would require
+      # joining ACS B25001 and is a separate methodological choice, not a wording fix.)
+      # DECISION D-020: entropy is computed by re-pooling raw sector counts within
+      # each catchment buffer, NOT by averaging block-level entropy. Verified reason:
+      # 45.0% of in-UA job-blocks have a single sector (entropy undefined), but those
+      # blocks hold only 5.96% of jobs. Averaging block entropy would drop 45% of
+      # blocks and size-bias the survivors.
+      entropy_sectors: [CNS01, CNS02, CNS03, CNS04, CNS05, CNS06, CNS07, CNS08, CNS09, CNS10,
+                        CNS11, CNS12, CNS13, CNS14, CNS15, CNS16, CNS17, CNS18, CNS19, CNS20]
+    osm_poi:
+      source: "OpenStreetMap amenity/shop/office tags via OSMnx features_from_polygon"
+      access: open
+      # Acquisition keeps EVERYTHING (raw is unfiltered). Filtering happens at
+      # Stage 2/3 using exclude_values below.
+      tags:
+        amenity: true
+        shop: true
+        office: true
+      # DECISION D-019: poi_density MUST exclude these before entering any model.
+      # Verified in the Denver UA extract (99,877 POIs): parking + street furniture
+      # is 73.4% of the layer, and `amenity=parking_space` alone is 32,055 —
+      # it maps INDIVIDUAL PAINTED STALLS. Its density measures mapper effort in
+      # particular parking lots, not land use, and it correlates with exactly the
+      # big-box suburban fabric the study must distinguish from the gridded core.
+      # Unfiltered, poi_density would be an artifact, not a control.
+      exclude_values:
+        amenity:
+          - parking
+          - parking_space
+          - parking_entrance
+          - bicycle_parking
+          - motorcycle_parking
+          - bench
+          - waste_basket
+          - waste_disposal
+          - letter_box
+          - shelter
+          - toilets
+          - loading_dock
+          - drinking_water
+          - bicycle_repair_station
+          - hunting_stand
+    building_footprints:
+      name: "Microsoft Global Building Footprints"
+      dataset_links: "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
+      access: open
+      requires_key: false
+      # VERIFIED 2026-07-30. Manifest HTTP 200, 30,344 rows, 225 regions.
+      status: verified
+      verified: "2026-07-30"
+      region_name: UnitedStates      # manifest Location is country-level; no state field
+      release: "2026-02-03"
+      quadkey_zoom: 9                # confirmed correct: 4 tiles cover the Denver UA
+      quadkeys: ["023101012", "023101013", "023101030", "023101031"]
+      features_in_ua: 780469
+      # TRAP: published files are named *.csv.gz but the payload is gzipped
+      # newline-delimited GeoJSON. Save locally as .geojsonl.gz so GDAL selects the
+      # GeoJSONSeq driver via /vsigzip/. This is the most likely thing to break a
+      # future reader.
+      payload_format: geojsonl_gz
+      # Attributes are height + confidence only. There is NO stable source id; the
+      # pipeline synthesises id = msgb_<quadkey>_<fid> from the sequential FID, which
+      # is NOT stable across MS releases. Never use it as an external join key.
+      # height == -1 (3.5%) and confidence == -1 (33.4%) are MISSING-DATA SENTINELS,
+      # not values. Recode to NaN before any use. built_density needs only
+      # footprint_area_m2, so this does not affect the stated use.
+      note: >
+        Supplies built_density (footprint area / buffer area). Written as GeoPackage
+        because pyarrow is absent, so GeoParquet is currently impossible (231 MB vs
+        an estimated ~130 MB for Parquet).
+      vintage_caveat: >
+        This is a 2026-02-03 release, but the outcome is HPMS 2018 and the controls
+        are ACS 2016-2020. built_density is therefore measured ~6-8 years AFTER the
+        outcome, and Denver's fringe (Aurora, Douglas County) built out substantially
+        in that window. D-006's median_year_structure_built partially absorbs this.
+        No historical MS release exists to fix it: report as a limitation.
+    zoning:
+      name: "Denver zoning / parcels"
+      portal: "https://opendata-geospatialdenver.hub.arcgis.com"
+      status: TODO_VERIFY
+      note: >
+        Municipal-boundary-limited, so it cannot cover the whole UA. Suburban
+        jurisdictions (Aurora, Lakewood, Arapahoe/Douglas counties) each publish
+        separately. LODES + OSM POIs are the UA-wide mix measures; zoning is a
+        Denver-only robustness check.
+
+  # --- Pilot test area (Stage 1 smoke test) --------------------------------
+  test_area:
+    # ~2.6 x 2.2 km of the classic Denver grid, straddling Colfax Ave and Colorado Blvd.
+    # Small enough to iterate on in seconds; contains both majors and dense local grid.
+    bbox_wsen: [-104.97, 39.73, -104.94, 39.75]
+    note: "Congress Park / City Park South, Denver. Grid fabric with arterials on all sides."
+
+
+# ============================================================================
+# Stage 5 comparison cities. Selected to span contrasting network cultures
+# (proposal 5.1). All UACE codes, areas, HPMS services, TIGER and LODES URLs
+# live-verified 2026-07-30.
+# ============================================================================
+
+portland:
+  label: "Portland, OR–WA"
+  role: comparison
+  network_culture: >
+    Gridded with unusually small blocks (~200 ft) and a strong regional planning
+    regime (UGB since 1979). Expected HIGH P1 — the clearest contrast to Sunbelt
+    fabric, and a test of whether substitutability tracks planning culture.
+  extent:
+    type: urban_area
+    uace20: "71317"
+    area_land_m2: 1345168346
+  states:
+    - fips: "41"
+      abbrev: or
+      tiger_dir: 41_OREGON
+      hpms_name: Oregon
+    - fips: "53"
+      abbrev: wa
+      tiger_dir: 53_WASHINGTON
+      hpms_name: Washington
+  cbd: {lat: 45.5202, lon: -122.6742, note: "Pioneer Courthouse Square, downtown Portland"}
+  census: {acs_year: 2020, acs_year_robustness: 2023, acs_dataset: "acs/acs5",
+           api_base: "https://api.census.gov/data", requires_key: true,
+           tract_vintage: 2020,
+           variables: {B01003_001E: total_population, B25001_001E: housing_units,
+                       B25035_001E: median_year_structure_built,
+                       B08201_001E: households_total, B08201_002E: households_no_vehicle,
+                       B25010_001E: avg_household_size}}
+  test_area:
+    bbox_wsen: [-122.70, 45.51, -122.65, 45.54]
+    note: "Inner SE Portland — the small-block grid."
+
+phoenix:
+  label: "Phoenix–Mesa–Scottsdale, AZ"
+  role: comparison
+  network_culture: >
+    The key discriminator for P1 vs P3. Phoenix has a dense 1-mile ARTERIAL grid
+    (so generic connectivity metrics computed on all roads look high) wrapped around
+    superblock interiors of loops and cul-de-sacs (so local SUBSTITUTABILITY should be
+    low). If P1 and P3 ever diverge sharply, it should be here.
+  extent:
+    type: urban_area
+    uace20: "69184"
+    area_land_m2: 2876309892
+  states:
+    - fips: "04"
+      abbrev: az
+      tiger_dir: 04_ARIZONA
+      hpms_name: Arizona
+  cbd: {lat: 33.4484, lon: -112.0740, note: "Downtown Phoenix"}
+  census: {acs_year: 2020, acs_year_robustness: 2023, acs_dataset: "acs/acs5",
+           api_base: "https://api.census.gov/data", requires_key: true,
+           tract_vintage: 2020,
+           variables: {B01003_001E: total_population, B25001_001E: housing_units,
+                       B25035_001E: median_year_structure_built,
+                       B08201_001E: households_total, B08201_002E: households_no_vehicle,
+                       B25010_001E: avg_household_size}}
+  test_area:
+    bbox_wsen: [-112.10, 33.47, -112.05, 33.50]
+    note: "North-central Phoenix — arterial mile grid with cul-de-sac interiors."
+
+boston:
+  label: "Boston, MA–NH"
+  role: comparison
+  network_culture: >
+    Organic/hybrid pre-automobile fabric — irregular, high intersection density, but
+    with topographic and historical severances. Tests whether the P1 mechanism holds
+    where the grid was never planned. Largest UA in the sample at 4,289 km2.
+  extent:
+    type: urban_area
+    uace20: "09271"
+    area_land_m2: 4288971524
+  states:
+    - fips: "25"
+      abbrev: ma
+      tiger_dir: 25_MASSACHUSETTS
+      hpms_name: Massachusetts
+    - fips: "33"
+      abbrev: nh
+      tiger_dir: 33_NEW_HAMPSHIRE
+      hpms_name: NewHampshire
+  cbd: {lat: 42.3559, lon: -71.0576, note: "Downtown Crossing, Boston"}
+  census: {acs_year: 2020, acs_year_robustness: 2023, acs_dataset: "acs/acs5",
+           api_base: "https://api.census.gov/data", requires_key: true,
+           tract_vintage: 2020,
+           variables: {B01003_001E: total_population, B25001_001E: housing_units,
+                       B25035_001E: median_year_structure_built,
+                       B08201_001E: households_total, B08201_002E: households_no_vehicle,
+                       B25010_001E: avg_household_size}}
+  test_area:
+    bbox_wsen: [-71.12, 42.34, -71.07, 42.37]
+    note: "Cambridge/Allston — organic fabric across the Charles."
+
+
+wasatch_front:
+  label: "Wasatch Front, UT (Salt Lake City + Ogden–Layton + Provo–Orem)"
+  role: comparison
+  network_culture: >
+    Brigham Young's 1833 Plat of Zion: a rigid grid of 10-acre, ~660 ft blocks with
+    132 ft streets — among the LARGEST blocks of any gridded US city, and the opposite
+    extreme from Portland's ~200 ft blocks. This is the reason it is in the sample and
+    not a duplicate of Denver: it tests whether "gridded" and "permeable" come apart.
+    A coarse grid has high link–node ratio (P3 looks good) but few parallel streets per
+    km, so substitutable routes (P1) may be sparse. If P1 and P3 diverge here as well as
+    in Phoenix, they diverge for two independent structural reasons.
+  comparability: >
+    Choi & Ewing (2021) — the closest prior observational study and the one the proposal
+    names as the state of the art — analysed Utah's Wasatch Front. Including it makes
+    this the only city in the sample where the new method can be set against an existing
+    published result in the same place. NOTE: the correspondence is at the level of the
+    study REGION; their exact analytic cells are not reproduced here and the match should
+    not be described as a replication without reading their spatial definition.
+  extent:
+    type: urban_area
+    uace20: ["78499", "64945", "72559"]
+    area_land_m2: 1745910000        # SLC 778 + Ogden-Layton 551 + Provo-Orem 417 km2
+  states:
+    - fips: "49"
+      abbrev: ut
+      tiger_dir: 49_UTAH
+      hpms_name: Utah
+  cbd: {lat: 40.7608, lon: -111.8910, note: "Temple Square / downtown Salt Lake City"}
+  census: {acs_year: 2020, acs_year_robustness: 2023, acs_dataset: "acs/acs5",
+           api_base: "https://api.census.gov/data", requires_key: true,
+           tract_vintage: 2020,
+           variables: {B01003_001E: total_population, B25001_001E: housing_units,
+                       B25035_001E: median_year_structure_built,
+                       B08201_001E: households_total, B08201_002E: households_no_vehicle,
+                       B25010_001E: avg_household_size}}
+  test_area:
+    bbox_wsen: [-111.92, 40.74, -111.86, 40.78]
+    note: "Downtown Salt Lake City — the plat-of-Zion superblocks."
+
+
+charlotte:
+  label: "Charlotte, NC–SC"
+  role: comparison
+  network_culture: >
+    Southeastern post-1970 growth fabric: a sparse, radial-plus-loop arterial skeleton
+    wrapped around subdivision interiors of curvilinear loops and cul-de-sacs, with
+    very little inherited grid outside Uptown. Added in revision to close the sample's
+    most consequential gap (D-075): the Southeast is where connectivity standards bind
+    hardest and where the pure cul-de-sac form is growing fastest, so the paper's claim
+    about standards was previously being made without observing the fabric it targets.
+    Expected LOW P1 and LOW-to-moderate P3 — a convergence case, unlike Phoenix's
+    divergence, and therefore a test of whether the P1 effect survives where BOTH
+    measures agree the fabric is poor.
+  extent:
+    type: urban_area
+    uace20: "15670"                      # verified: "Charlotte, NC--SC Urban Area"
+    area_land_m2: 1703209371             # verified from TIGER 2023 UAC20 ALAND20
+  states:
+    - fips: "37"
+      abbrev: nc
+      tiger_dir: 37_NORTH_CAROLINA
+      hpms_name: NorthCarolina
+    - fips: "45"
+      abbrev: sc
+      tiger_dir: 45_SOUTH_CAROLINA
+      hpms_name: SouthCarolina
+  cbd: {lat: 35.2271, lon: -80.8431, note: "Trade & Tryon, Uptown Charlotte"}
+  census: {acs_year: 2020, acs_year_robustness: 2023, acs_dataset: "acs/acs5",
+           api_base: "https://api.census.gov/data", requires_key: true,
+           tract_vintage: 2020,
+           variables: {B01003_001E: total_population, B25001_001E: housing_units,
+                       B25035_001E: median_year_structure_built,
+                       B08201_001E: households_total, B08201_002E: households_no_vehicle,
+                       B25010_001E: avg_household_size}}
+  test_area:
+    bbox_wsen: [-80.86, 35.20, -80.81, 35.24]
+    note: "Uptown Charlotte and Dilworth — the only substantial gridded fabric in the UA."

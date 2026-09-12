@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "Please cite this fixed software and data release when using the analysis."
+type: software
+title: "Local street permeability and arterial traffic: Research code and data"
+authors:
+  - family-names: Alhassan
+    given-names: Abdulaziz
+    affiliation: "Department of Urban Planning, King Saud University"
+version: 1.0.0
+date-released: "2026-09-13"
+repository-code: "https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic"
+url: "https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.0"
+abstract: >-
+  Original code, configurations, frozen analysis data and supporting source inputs
+  for an observational six-city study of local street network substitutability
+  and arterial traffic volumes. Software is MIT licensed; source and derived
+  databases retain separate terms documented in DATA_LICENSES.md, including ODbL.
+keywords:
+  - street network
+  - substitutability
+  - arterial traffic
+  - AADT
+  - OpenStreetMap
+  - transport geography
+

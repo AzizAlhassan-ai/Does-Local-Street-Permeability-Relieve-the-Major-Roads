@@ -1,0 +1,33 @@
+M3: y ~ pop_density_km2_z + lu_entropy_z + dist_cbd_km_c_z + dist_cbd_km_c_sq_z + median_year_z + through_lanes_z + C(f_system) + perm_z + access_controlled + betw_z + perm_z:access_controlled + perm_z:betw_z
+
+n=2803  cells=613
+ICC=0.1604
+
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                MixedLM     Dependent Variable:     y         
+No. Observations:     2803        Method:                 REML      
+No. Groups:           613         Scale:                  0.2969    
+Min. group size:      1           Log-Likelihood:         -2485.4169
+Max. group size:      26          Converged:              Yes       
+Mean group size:      4.6                                           
+--------------------------------------------------------------------
+                         Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                 9.961    0.042 236.798 0.000  9.879 10.044
+C(f_system)[T.4]         -0.493    0.043 -11.515 0.000 -0.577 -0.409
+C(f_system)[T.5]         -1.297    0.047 -27.434 0.000 -1.390 -1.205
+pop_density_km2_z         0.046    0.018   2.590 0.010  0.011  0.081
+lu_entropy_z             -0.006    0.013  -0.477 0.634 -0.032  0.019
+dist_cbd_km_c_z           0.097    0.025   3.837 0.000  0.047  0.146
+dist_cbd_km_c_sq_z        0.017    0.018   0.905 0.365 -0.019  0.053
+median_year_z            -0.027    0.020  -1.321 0.187 -0.067  0.013
+through_lanes_z           0.248    0.015  16.255 0.000  0.218  0.278
+perm_z                   -0.345    0.033 -10.591 0.000 -0.409 -0.281
+access_controlled         0.202    0.043   4.699 0.000  0.118  0.286
+betw_z                    0.073    0.014   5.383 0.000  0.046  0.099
+perm_z:access_controlled  0.313    0.062   5.043 0.000  0.191  0.434
+perm_z:betw_z             0.019    0.029   0.665 0.506 -0.037  0.075
+Group Var                 0.057    0.016                            
+====================================================================
+

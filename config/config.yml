@@ -1,0 +1,299 @@
+# Global analysis parameters.
+# Every script reads from here. No script hard-codes a path, bbox, radius, or tag filter.
+# Changing a value here and re-running must be sufficient to change the analysis.
+
+project:
+  name: local-permeability-arterial-traffic
+  pilot_city: denver
+
+crs:
+  # Storage CRS for all raw/processed vector data.
+  geographic: "EPSG:4326"
+  # Metric CRS for ALL length, area, and distance computation.
+  # NAD83 / Conus Albers: equal-area, single consistent CRS across all US cities,
+  # distortion well under 1% at neighborhood scale in the CONUS interior.
+  # DECISION D-002 in PLAN.md — chosen over per-city UTM for multi-city comparability.
+  metric: "EPSG:5070"
+
+catchment:
+  # Buffer radii around each major-road segment, for the MAUP sensitivity sweep.
+  # 800 m (~0.5 mi) is the primary specification; the rest are robustness runs.
+  radii_m: [400, 800, 1200, 1600]
+  primary_radius_m: 800
+
+# OSM highway-tag partition. DECISION D-001 in PLAN.md.
+# These two sets MUST be disjoint: the predictor (local permeability) may never be
+# computed on the same edges that supply the outcome (major-road AADT).
+network:
+  major_highway_tags:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+  local_highway_tags:
+    - residential
+    - living_street
+    - unclassified
+  # Excluded from BOTH sets: service, track, footway, cycleway, path, pedestrian,
+  # steps, bridleway, construction, proposed, raceway, busway.
+  # Rationale: service roads (alleys, parking aisles) would massively inflate
+  # intersection density without representing public through-routes.
+  excluded_highway_tags:
+    - service
+    - track
+    - footway
+    - cycleway
+    - path
+    - pedestrian
+    - steps
+    - bridleway
+    - construction
+    - proposed
+    - raceway
+    - busway
+  # OSMnx network_type used when downloading. 'drive' already excludes non-vehicular ways;
+  # we apply the tag partition on top of it.
+  network_type: drive
+  # Betweenness centrality on the metro graph is O(V*E) exactly. Use pivot sampling.
+  # DECISION D-025: k raised 1000 -> 8000. At k=1000 the stability check (k=1000 vs
+  # k=500, different seeds) gave Spearman r = 0.946 — real rank churn, which as a
+  # MODERATOR would attenuate H2's interaction term through measurement error.
+  # Cost is trivial: the Denver major graph is only 28,890 nodes / 36,457 edges and
+  # runs at ~0.081 s per pivot, so k=8000 is ~11 min. A FIXED k (rather than exact)
+  # is deliberate: it keeps cost predictable and the estimator comparable across
+  # cities of different sizes in Stage 5.
+  betweenness_k_pivots: 8000
+  # DECISION D-026: betweenness is set to NA where the nearest major OSM edge is
+  # farther than this from the HPMS segment midpoint. Verified at k=1000: match
+  # distance is median 37.8 m but p99 = 8,847 m and max 14.6 km, so ~5.5% of
+  # segments would otherwise be assigned the betweenness of an edge kilometres away.
+  # A moderator carrying garbage on 5.5% of rows would corrupt H2.
+  betweenness_max_match_dist_m: 500
+
+  # DECISION D-012 (OQ-1): keep `tertiary` in the MAJOR set for the primary
+  # specification, and run this alternative partition as a sensitivity check.
+  # Motivation: in the Denver test area, `tertiary` accounted for 135 of 383 major
+  # edges (41% of all edges classed major). Denver tags many neighbourhood
+  # through-streets as tertiary, so the primary partition may over-assign to
+  # "major". Under this variant, major share falls to roughly 26%.
+  sensitivity_tertiary_as_local:
+    major_highway_tags:
+      - motorway
+      - trunk
+      - primary
+      - secondary
+      - motorway_link
+      - trunk_link
+      - primary_link
+      - secondary_link
+    local_highway_tags:
+      - residential
+      - living_street
+      - unclassified
+      - tertiary
+      - tertiary_link
+
+dependent_variable:
+  # HPMS functional system codes retained as the outcome.
+  # 1 Interstate | 2 Principal Arterial - Other Freeways & Expressways
+  # 3 Principal Arterial - Other | 4 Minor Arterial
+  # 5 Major Collector | 6 Minor Collector | 7 Local
+  # DECISION D-003: retain 3,4,5. Freeways (1,2) are grade-separated with no local
+  # access, so the relief mechanism cannot operate on them; they are used only to
+  # build the metro betweenness graph.
+  hpms_f_system_keep: [3, 4, 5]
+  min_aadt: 1
+  # Primary outcome transform. DECISION D-004.
+  primary_transform: log
+  co_primary: aadt_per_lane
+
+  # DECISION D-017: keep only two-way roadways in the primary specification.
+  # HPMS facility_type: 1 = One-Way, 2 = Two-Way, 4 = Ramp, 6 = Non-Inventory Direction.
+  # On a one-way roadway HPMS AADT is DIRECTIONAL; on a two-way it is bidirectional.
+  # Mixing them puts two different quantities in one outcome column. Critically,
+  # one-way segments are almost perfectly confounded with centrality — verified in
+  # the Denver UA: median distance to CBD 1.67 km for one-way vs 14.59 km for two-way
+  # — i.e. they sit exactly at the high-permeability end of the key predictor.
+  # Cost of exclusion is small: 655 of 10,267 analysis rows (6.4%), plus 122 ramps.
+  hpms_facility_type_keep: [2]
+  hpms_facility_type_sensitivity: [1, 2]   # robustness run, one-way included
+
+  # HPMS uses 999 as a "not reported" sentinel for speed_limit. Anything outside
+  # this band is treated as missing.
+  speed_limit_plausible_mph: [5, 90]
+
+  # Global (not per-city): the HPMS Public Release schema is identical across all
+  # 50 states, so the retained-field list belongs here. `access_control_` added
+  # per D-018 — it is the H2 moderator.
+  hpms_retain_fields:
+    - objectid
+    - route_id
+    - begin_point
+    - end_point
+    - aadt
+    - aadt_combination
+    - aadt_single_unit
+    - access_control_
+    - f_system
+    - facility_type
+    - ownership
+    - nhs
+    - through_lanes
+    - speed_limit
+    - urban_code
+    - county_code
+    - route_number
+    - route_name
+    - route_signing
+
+# Substitutable local through-routes — the redefined primary predictor (D-035..D-041).
+through_routes:
+  detour_cap: 1.5                 # D-037; sensitivity at 1.25 / 2.0
+  detour_cap_sensitivity: [1.25, 2.0]
+  access_radius_m: 200            # D-041
+  max_paths: 5                    # D-039
+  short_segment_m: 500            # D-041 flag threshold
+  # D-037a: a counted route must span at least this fraction of the segment, and its
+  # detour is measured against the arterial distance between its OWN access points.
+  min_span_frac: 0.5
+
+  # D-058: quality-adjusted substitutability (P1q). P1 caps DISTANCE, which treats a
+  # winding colonial street crossing 30 stop-controlled intersections as equivalent to
+  # a straight suburban collector of the same length. Boston's effect is 5x smaller
+  # than Denver's, and the leading explanation is that its topologically valid
+  # substitutes are functionally poor. P1q converts each candidate route to an
+  # estimated TRAVEL TIME -- free-flow speed by highway class plus a fixed delay per
+  # intersection traversed -- and caps the ratio against the arterial's own estimated
+  # time. Speeds are engineering defaults, not measured: OQ-2 established that OSM
+  # maxspeed is unusable on US local streets (48.9% tagged, 94.8% of those identical).
+  quality:
+    local_speed_kmh: {residential: 40, living_street: 20, unclassified: 48}
+    local_speed_default_kmh: 40
+    # Arterial free-flow by HPMS functional system (3 principal, 4 minor, 5 collector)
+    arterial_speed_kmh: {3: 64, 4: 56, 5: 48}
+    arterial_speed_default_kmh: 56
+    intersection_delay_s: 6.0     # stop/yield-controlled local intersection
+    time_cap: 1.5                 # same cap as distance, for comparability
+
+# DECISION D-028: the unit of analysis is the AADT-HOMOGENEOUS CONTIGUOUS RUN,
+# not the raw HPMS 0.1-mile increment.
+# HPMS reports in 0.1-mile increments, but AADT is constant along a stretch — the
+# splitting is an artifact of linear referencing, not independent observation. Raw:
+# 9,490 segments on 1,309 routes, median length 160 m against an 800 m buffer, so
+# adjacent records had near-identical predictors (median 62 overlapping catchments).
+# Dissolving contiguous runs that share all homogeneity_keys gives 2,964 units
+# (3.20x reduction), median length 684 m, 43.5% longer than the primary buffer radius.
+# This removes pseudo-replication AT SOURCE rather than patching standard errors.
+# Spatial specifications (D-021) are still run — dissolving reduces dependence, it
+# does not eliminate it.
+segment_definition:
+  dissolve_homogeneous: true
+  homogeneity_keys: [aadt, f_system, through_lanes, access_control_, ownership, facility_type]
+  contiguity_tolerance: 1.0e-6      # begin_point/end_point are in miles
+
+# DECISION D-014 (OQ-4): the level-2 grouping unit for the multilevel models.
+analysis_unit:
+  # Primary: regular 1 mi² grid, for fidelity to Choi & Ewing (2021).
+  primary:
+    type: regular_grid
+    cell_area_mi2: 1.0
+    cell_side_m: 1609.344          # 1 mile; grid built in EPSG:5070
+  # Robustness: Census tracts. Ready-made and administratively meaningful, but
+  # uneven in size, which confounds the MAUP sweep.
+  robustness:
+    type: census_tract
+
+# DECISION D-006 (approved): distance-to-CBD and building vintage are FIRST-CLASS
+# controls, not robustness checks. In Denver, permeability is near-collinear with
+# development era and centrality; without these, the H1 coefficient largely reports
+# "close-in vs. peripheral" rather than a network-form effect.
+# NOTE: this is a departure from proposal §5.3 — flagged in PLAN.md.
+controls:
+  first_class:
+    # DECISION D-029: keep ONE residential-density measure. pop_density_km2 and
+    # housing_density_km2 correlate 0.923 and each carried VIF ~10; they measure the
+    # same construct. pop_density is retained because it is the standard density term
+    # in the three-Ds literature (Cervero & Kockelman 1997; Ewing & Cervero 2010),
+    # which keeps the coefficient comparable to prior work. housing_density moves to
+    # secondary and is reported as a robustness substitution.
+    - pop_density_km2
+    - lu_entropy
+    - dist_cbd_km_c                # D-006, CENTRED (see D-030)
+    - median_year_structure_built   # D-006
+    - through_lanes
+    - f_system
+  secondary:
+    - housing_density_km2          # D-029 substitution check
+    - pct_no_vehicle
+    - poi_density
+    - built_density
+    - nhs
+    - ownership
+
+# DECISION D-030: the quadratic centrality term (D-027) uses a CENTRED base.
+# Raw dist_cbd_km and its square correlate 0.958 (VIF 19.7 / 15.3); after centring
+# the pair correlates only 0.289. This is a pure parameterisation fix — the fitted
+# surface is identical, but the coefficients become interpretable and the VIF
+# diagnostic stops flagging a non-problem.
+centring:
+  dist_cbd: mean
+
+# URL templates. Adding a city means listing its states below, not editing code.
+# All patterns live-verified 2026-07-30 across CO/OR/WA/AZ/MA/NH.
+# NOTE the two distinct state-name forms: TIGER block dirs use NEW_HAMPSHIRE
+# (underscored), HPMS services use NewHampshire (concatenated).
+sources:
+  tract_url_tpl: "https://www2.census.gov/geo/tiger/TIGER2023/TRACT/tl_2023_{fips}_tract.zip"
+  block_url_tpl: "https://www2.census.gov/geo/tiger/TIGER2020PL/STATE/{tiger_dir}/{fips}/tl_2020_{fips}_tabblock20.zip"
+  lodes_url_tpl: "https://lehd.ces.census.gov/data/lodes/LODES8/{abbrev}/wac/{abbrev}_wac_S000_JT00_{year}.csv.gz"
+  hpms_service_tpl: "https://geo.dot.gov/server/rest/services/Hosted/{hpms_name}_2018_PR/FeatureServer/0"
+  uac_url: "https://www2.census.gov/geo/tiger/TIGER2023/UAC/tl_2023_us_uac20.zip"
+
+# DECISION D-048: land-use source settings are shared across cities. Only per-state
+# URLs differ, and those are built from `sources` templates. Denver keeps its own
+# richer block (with verification notes); every other city inherits these.
+land_use_defaults:
+  lodes:
+    year: 2018
+    total_jobs_field: C000
+    block_key_field: w_geocode
+    entropy_min_sectors: 2
+    entropy_sectors: [CNS01, CNS02, CNS03, CNS04, CNS05, CNS06, CNS07, CNS08, CNS09, CNS10,
+                      CNS11, CNS12, CNS13, CNS14, CNS15, CNS16, CNS17, CNS18, CNS19, CNS20]
+  osm_poi:
+    source: "OpenStreetMap amenity/shop/office tags via OSMnx features_from_polygon"
+    access: open
+    tags: {amenity: true, shop: true, office: true}
+    exclude_values:
+      amenity: [parking, parking_space, parking_entrance, bicycle_parking,
+                motorcycle_parking, bench, waste_basket, waste_disposal, letter_box,
+                shelter, toilets, loading_dock, drinking_water,
+                bicycle_repair_station, hunting_stand]
+  building_footprints:
+    name: "Microsoft Global Building Footprints"
+    access: open
+    requires_key: false
+    status: verified
+    dataset_links: "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
+    quadkey_zoom: 9
+    payload_format: geojsonl_gz
+
+# DECISION D-047: with only 4 cities, CITY ENTERS AS A FIXED EFFECT, not a third
+# random level. A random intercept needs many more than 4 groups to estimate its
+# variance; with 4 the estimate is unstable and the shrinkage is meaningless. The
+# proposal's three-level framing (segments in neighbourhoods in cities) is therefore
+# implemented as: cell random intercept + city dummies + city-clustered inference.
+# If the sample later grows past ~15-20 cities, revisit.
+multi_city:
+  city_effect: fixed
+  min_cities_for_random: 15
+
+reproducibility:
+  random_seed: 20260730
+  osmnx_use_cache: true

@@ -1,0 +1,22 @@
+# Credentials and machine-specific files
+.env
+.env.*
+*.key
+secrets.yml
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# These original data are distributed as versioned release archives.
+data/cache/
+data/processed/
+data/raw/
+downloads/
+*.tar.gz
+*.zip.part*
+PROGRESS.md
+
+# Analysis tables are deliberately included in this public repository.
+
+release-assets/

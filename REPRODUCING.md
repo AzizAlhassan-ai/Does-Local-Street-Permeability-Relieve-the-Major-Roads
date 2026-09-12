@@ -1,4 +1,6 @@
-# Reproducing the deposited research
+# Reproducing the deposited research — v1.0.1
+
+Use **v1.0.1**, the first completed public release. The earlier `v1.0.0` tag identifies the initial staging snapshot and is not the completed data release.
 
 This document describes the existing research scripts as inspected for the public deposit. The research code, configuration, data, and saved results are preserved without methodological changes. The complete acquisition and modelling pipeline was **not rerun as part of preparing this deposit**. Commands below were checked against script arguments and file dependencies; a successful independent end-to-end rerun is not claimed. The primary estimator was separately rerun in an isolated copy and compared with the archived CSV; see [VERIFICATION.md](VERIFICATION.md).
 
@@ -29,18 +31,13 @@ uv sync --frozen --python 3.12
 mkdir -p outputs/tables outputs/models outputs/figures notes
 ```
 
-The modelling tables are in the repository itself. Larger processed and raw data are release assets. Download them from this repository's Releases page, placing them in `release-assets/`. Alternatively, from a clone with the GitHub CLI available:
+The modelling tables are in the repository itself. Larger processed and raw data are release assets. Some archives are uploaded whole and others in smaller pieces. From the root of the v1.0.1 clone, run the supplied download helper:
 
 ```bash
-mkdir -p release-assets
-gh release download v1.0.0 --pattern 'processed-data.tar.gz' --dir release-assets
-gh release download v1.0.0 --pattern 'raw-*.tar.gz' --dir release-assets
-gh release download v1.0.0 --pattern 'hpms_2024_national.zip.part*' --dir release-assets
-gh release download v1.0.0 --pattern 'DATA_LICENSES.md' --dir release-assets
-gh release download v1.0.0 --pattern 'CDLA-Permissive-2.0.txt' --dir release-assets
-gh release download v1.0.0 --pattern 'RELEASE_ASSETS_SHA256.txt' --dir release-assets
-(cd release-assets && shasum -a 256 -c RELEASE_ASSETS_SHA256.txt)
+python3 download_data.py
 ```
+
+The helper downloads the release assets, verifies their checksums, and reconstructs the original archive filenames in `release-assets/`, including `processed-data.tar.gz`, the six `raw-<city>.tar.gz` archives, and `hpms_2024_national.zip`. Do not extract individual transport pieces. For advanced manual downloads, use `data-assets.json` as the source of exact asset names, ordered pieces, reconstructed filenames, and checksums; do not assume that each logical archive appears as a single downloadable asset or has a fixed number of parts.
 
 Extract the processed and city archives from the repository root:
 
@@ -55,13 +52,9 @@ The archives restore the `data/processed/` and `data/raw/<city>/` paths expected
 
 ### HPMS 2024 currency and sample-panel checks
 
-The large original national ZIP is supplied in ordered parts. Reassemble it without changing its bytes:
+After `python3 download_data.py` completes, the reconstructed original national ZIP is already at `release-assets/hpms_2024_national.zip`. Inspect and extract it:
 
 ```bash
-cat release-assets/hpms_2024_national.zip.part01 \
-    release-assets/hpms_2024_national.zip.part02 \
-    release-assets/hpms_2024_national.zip.part03 \
-    > release-assets/hpms_2024_national.zip
 unzip -l release-assets/hpms_2024_national.zip
 mkdir -p data/raw/_hpms_currency
 unzip release-assets/hpms_2024_national.zip -d data/raw/_hpms_currency
@@ -220,7 +213,7 @@ This route queries current provider endpoints and is a **new acquisition**, not 
 | Local, major, and all-road graph extracts | OpenStreetMap through OSMnx/Overpass; `01a_osm_network.py --extent urban_area`. |
 | Employment sectors and optional points of interest | LEHD LODES v8, 2018 workplace data with Census block geography, and OSM POIs; `01e_landuse_mix.py`. |
 | Building footprints | Microsoft Global Building Footprints manifest/tiles; `01f_building_footprints.py`. |
-| HPMS 2024 | National geodatabase, provided as release parts or installed manually; no `01_acquire` script downloads it. |
+| HPMS 2024 | National geodatabase, restored by `download_data.py` from the release assets or installed manually from the provider; no `01_acquire` script downloads it. |
 
 The ACS acquisition code requires a Census API key. Set `CENSUS_API_KEY` privately in the process environment before running `01c`; obtain your own key from the Census API service. No credential is included in this repository. The archived-table route in Section 3 does not need a key.
 

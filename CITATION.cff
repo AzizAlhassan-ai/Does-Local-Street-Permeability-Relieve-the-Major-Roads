@@ -6,10 +6,10 @@ authors:
   - family-names: Alhassan
     given-names: Abdulaziz
     affiliation: "Department of Urban Planning, King Saud University"
-version: 1.0.0
+version: 1.0.1
 date-released: "2026-09-13"
 repository-code: "https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic"
-url: "https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.0"
+url: "https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.1"
 abstract: >-
   Original code, configurations, frozen analysis data and supporting source inputs
   for an observational six-city study of local street network substitutability

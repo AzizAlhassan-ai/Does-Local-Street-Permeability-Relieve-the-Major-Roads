@@ -4,7 +4,7 @@ Research code and data supporting **Does Local Street Permeability Relieve the M
 
 **Abdulaziz Alhassan — Department of Urban Planning, King Saud University**
 
-[Download the fixed v1.0.0 release](https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.0) · [Reproduction instructions](REPRODUCING.md) · [Data dictionary](DATA_DICTIONARY.md) · [Data licences](DATA_LICENSES.md)
+[Download the fixed v1.0.1 release](https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.1) · [Reproduction instructions](REPRODUCING.md) · [Data dictionary](DATA_DICTIONARY.md) · [Data licences](DATA_LICENSES.md)
 
 ## Study
 
@@ -27,11 +27,19 @@ The final specification uses exogenous-attribute analysis units, a minimum segme
 | `FILE_MANIFEST.csv` | SHA-256, byte count and repository/archive location for each included research file. |
 | `RELEASE_ASSETS_SHA256.txt` | Checksums of downloadable release assets. |
 
-Large inputs are attached to the release rather than stored in Git history:
+Large inputs are attached to the release as intact archives or verified smaller pieces. Download and reassemble them automatically from the repository root:
+
+```bash
+python3 download_data.py
+```
+
+The helper uses the ordered files and SHA-256 checksums in `data-assets.json`, downloads the licence companions, and restores these unchanged archive files in `release-assets/`:
 
 - `processed-data.tar.gz`: all processed city data and analysis variants.
 - `raw-<city>.tar.gz`: six archives containing the original city inputs, including the exact OSM networks.
-- `hpms_2024_national.zip.part01` through `.part03`: the original national HPMS 2024 download in three parts. Rejoin them before extracting; the reproduction guide gives the commands.
+- `hpms_2024_national.zip`: the original national HPMS 2024 download for supporting outcome checks.
+
+The helper does not extract files or run analysis. Follow [REPRODUCING.md](REPRODUCING.md) to install the archives. `--only processed`, `--only raw`, or `--only hpms` downloads a subset; the primary model below needs none of these large archives.
 
 The archives preserve the original research file contents. Symbolic links are materialized as ordinary files so the download is portable. Private drafts, reviewer discussions, credentials, local environments and redundant HTTP caches are excluded.
 
@@ -50,11 +58,11 @@ Run reproductions in a working copy: original scripts write results to `outputs/
 
 ## Version and citation
 
-This is the first public publication package, **v1.0.0 (13 September 2026)**. Research code, configurations, included data and saved results were copied without substantive modification from the author's working directory. Publication documentation and citation metadata were prepared separately. The original research directory was not edited.
+This is the first completed public publication package, **v1.0.1 (13 September 2026)**. Research code, configurations, included data and saved results were copied without substantive modification from the author's working directory. Publication documentation, the data-download helper and citation metadata were prepared separately. The original research directory was not edited.
 
 Use the fixed version when citing:
 
-> Alhassan, A. (2026). *Local street permeability and arterial traffic: Research code and data* (Version 1.0.0). GitHub. https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.0
+> Alhassan, A. (2026). *Local street permeability and arterial traffic: Research code and data* (Version 1.0.1). GitHub. https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.1
 
 Machine-readable software citation metadata is provided in [CITATION.cff](CITATION.cff). This GitHub release has no assigned DOI. The repository does not assert journal acceptance or substitute for the article's data-availability statement.
 

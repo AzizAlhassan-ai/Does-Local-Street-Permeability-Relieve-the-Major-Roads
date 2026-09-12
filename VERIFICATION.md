@@ -7,9 +7,9 @@ Prepared on 13 September 2026. These checks concern the integrity and usability 
 - 801 included research files were fingerprinted with SHA-256 and byte counts before packaging.
 - All 195 research files copied directly into the public repository matched the original bytes.
 - Every member of the seven data archives was read back and checked against its source-file SHA-256. Links were dereferenced to portable ordinary files with identical contents.
-- The three national HPMS parts reconstruct the original ZIP byte-for-byte. The original ZIP passed its full member CRC integrity check.
+- The ordered national HPMS pieces reconstruct the original ZIP byte-for-byte. The original ZIP passed its full member CRC integrity check.
 - After packaging, all 801 included source files again matched their original hashes. Size and modification timestamps of 456 other research files also remained unchanged.
-- Research code, configuration, data, manuscript files and saved results in the original working directory were not edited. Publication README, data dictionary, reproduction guide, citation metadata, licence clarification and manifests were prepared in a separate directory.
+- Research code, configuration, data, manuscript files and saved results in the original working directory were not edited. Publication README, data dictionary, reproduction guide, download helper, citation metadata, licence clarification and manifests were prepared in a separate directory.
 
 ## Primary numerical reproduction
 
@@ -31,3 +31,11 @@ Key installed package versions: NumPy 2.5.1; pandas 3.0.5; statsmodels 0.14.6; P
 - Microsoft data-licence documentation was checked against the provider's March 2026 licence change. The original project licence file remains unchanged; `DATA_LICENSES.md` clarifies the current source terms.
 
 `FILE_MANIFEST.csv` identifies the included research bytes. `RELEASE_ASSETS_SHA256.txt` identifies the downloadable archive and licence files.
+
+## Large-file delivery
+
+Large archives are delivered as intact files or 100 MB pieces. Every ordered sequence in `data-assets.json` was recombined in memory and matched the original logical archive hash and size. This changes delivery only; no research data bytes were changed. The first completed public release is v1.0.1; the v1.0.0 Git tag identifies the initial staging snapshot.
+
+The new download helper was validated against the actual manifest and small isolated fixtures covering ordered reassembly, checksums, retry/resume, licence downloads, same-name single pieces, and preservation of conflicting files. It uses the Python standard library and does not extract data or execute research code.
+
+The helper's local-only verification also passed against all eight actual logical archives: processed data, six city archives and the original national HPMS ZIP.

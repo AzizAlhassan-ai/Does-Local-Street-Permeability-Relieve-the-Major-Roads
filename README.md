@@ -1,10 +1,14 @@
-# Local street permeability and arterial traffic
+# Does Local Street Permeability Relieve the Major Roads? Measuring Substitutability, Not Connectivity, in Six US Urban Areas
 
-Research code and data supporting **Does Local Street Permeability Relieve the Major Roads? Measuring Substitutability, Not Connectivity, in Six US Urban Areas**.
+Research code and frozen data supporting the paper above.
 
-**Abdulaziz Alhassan — Department of Urban Planning, King Saud University**
+**Paper authors (in order): Abdulaziz M. Alhassan and Ibrahim Altasan**
 
-[Download the fixed v1.0.1 release](https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.1) · [Reproduction instructions](REPRODUCING.md) · [Data dictionary](DATA_DICTIONARY.md) · [Data licences](DATA_LICENSES.md)
+Department of Urban Planning, King Saud University.
+
+**Data collection and analysis:** Abdulaziz M. Alhassan.
+
+[Current release: v1.0.2](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.2) · [Frozen data: v1.0.1](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.1) · [Reproduction instructions](REPRODUCING.md) · [Data dictionary](DATA_DICTIONARY.md) · [Data licences](DATA_LICENSES.md)
 
 ## Study
 
@@ -25,9 +29,9 @@ The final specification uses exogenous-attribute analysis units, a minimum segme
 | `outputs/tables/`, `outputs/figures/`, `outputs/models/` | Saved original results; see the reproduction guide for the final-versus-earlier distinction. |
 | `notes/data-provenance.md` | Original acquisition provenance log. |
 | `FILE_MANIFEST.csv` | SHA-256, byte count and repository/archive location for each included research file. |
-| `RELEASE_ASSETS_SHA256.txt` | Checksums of downloadable release assets. |
+| `RELEASE_ASSETS_SHA256.txt` | Checksums of the unchanged v1.0.1 release assets. |
 
-Large inputs are attached to the release as intact archives or verified smaller pieces. Download and reassemble them automatically from the repository root:
+Large inputs remain attached to the [v1.0.1 data release](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.1) as intact archives or verified smaller pieces. Download and reassemble them automatically from the repository root:
 
 ```bash
 python3 download_data.py
@@ -58,13 +62,19 @@ Run reproductions in a working copy: original scripts write results to `outputs/
 
 ## Version and citation
 
-This is the first completed public publication package, **v1.0.1 (13 September 2026)**. Research code, configurations, included data and saved results were copied without substantive modification from the author's working directory. Publication documentation, the data-download helper and citation metadata were prepared separately. The original research directory was not edited.
+**v1.0.2 (13 September 2026)** updates the displayed paper title, repository address and paper-author metadata. The research code, configurations, data, saved results and download helper are unchanged from v1.0.1. The original research directory and manuscript were not edited.
 
-Use the fixed version when citing:
+The first completed code-and-data deposit remains **v1.0.1**. Its frozen attachments, download manifest and checksums are preserved. The helper retains the original repository address, which GitHub redirects to this renamed repository.
 
-> Alhassan, A. (2026). *Local street permeability and arterial traffic: Research code and data* (Version 1.0.1). GitHub. https://github.com/AzizAlhassan-ai/local-permeability-arterial-traffic/releases/tag/v1.0.1
+Paper citation (manuscript in preparation):
 
-Machine-readable software citation metadata is provided in [CITATION.cff](CITATION.cff). This GitHub release has no assigned DOI. The repository does not assert journal acceptance or substitute for the article's data-availability statement.
+> Alhassan, A. M., & Altasan, I. (2026). *Does Local Street Permeability Relieve the Major Roads? Measuring Substitutability, Not Connectivity, in Six US Urban Areas*. Manuscript in preparation.
+
+Code and data citation:
+
+> Alhassan, A. M. (2026). *Does Local Street Permeability Relieve the Major Roads? Measuring Substitutability, Not Connectivity, in Six US Urban Areas* [Research code and data] (Version 1.0.2; frozen data from Version 1.0.1). GitHub. https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.2
+
+[CITATION.cff](CITATION.cff) records the software author and provides the two-author paper as the preferred article citation. Paper authorship and software/data contributions are recorded separately. No DOI or journal acceptance is claimed.
 
 ## Licences and attribution
 

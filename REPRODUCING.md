@@ -1,6 +1,6 @@
-# Reproducing the deposited research — v1.0.1
+# Reproducing the deposited research — v1.0.2
 
-Use **v1.0.1**, the first completed public release. The earlier `v1.0.0` tag identifies the initial staging snapshot and is not the completed data release.
+Use **v1.0.2** for the current title and paper-author metadata. Its scientific files and download helper are identical to **v1.0.1**, the first completed public code-and-data release. Large inputs and their original checksums remain in the [v1.0.1 release](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.1). The earlier `v1.0.0` tag identifies the initial staging snapshot.
 
 This document describes the existing research scripts as inspected for the public deposit. The research code, configuration, data, and saved results are preserved without methodological changes. The complete acquisition and modelling pipeline was **not rerun as part of preparing this deposit**. Commands below were checked against script arguments and file dependencies; a successful independent end-to-end rerun is not claimed. The primary estimator was separately rerun in an isolated copy and compared with the archived CSV; see [VERIFICATION.md](VERIFICATION.md).
 
@@ -31,13 +31,13 @@ uv sync --frozen --python 3.12
 mkdir -p outputs/tables outputs/models outputs/figures notes
 ```
 
-The modelling tables are in the repository itself. Larger processed and raw data are release assets. Some archives are uploaded whole and others in smaller pieces. From the root of the v1.0.1 clone, run the supplied download helper:
+The modelling tables are in the repository itself. Larger processed and raw data are release assets. Some archives are uploaded whole and others in smaller pieces. From the root of the v1.0.2 clone (or the original v1.0.1 clone), run the supplied download helper:
 
 ```bash
 python3 download_data.py
 ```
 
-The helper downloads the release assets, verifies their checksums, and reconstructs the original archive filenames in `release-assets/`, including `processed-data.tar.gz`, the six `raw-<city>.tar.gz` archives, and `hpms_2024_national.zip`. Do not extract individual transport pieces. For advanced manual downloads, use `data-assets.json` as the source of exact asset names, ordered pieces, reconstructed filenames, and checksums; do not assume that each logical archive appears as a single downloadable asset or has a fixed number of parts.
+The unchanged helper uses the original repository address, which GitHub redirects to the renamed repository. It downloads the v1.0.1 release assets, verifies their checksums, and reconstructs the original archive filenames in `release-assets/`, including `processed-data.tar.gz`, the six `raw-<city>.tar.gz` archives, and `hpms_2024_national.zip`. Do not extract individual transport pieces. For advanced manual downloads, use `data-assets.json` as the source of exact asset names, ordered pieces, reconstructed filenames, and checksums; do not assume that each logical archive appears as a single downloadable asset or has a fixed number of parts.
 
 Extract the processed and city archives from the repository root:
 

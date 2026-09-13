@@ -6,8 +6,6 @@ Research code and frozen data supporting the paper above.
 
 Department of Urban Planning, King Saud University.
 
-**Data collection and analysis:** Abdulaziz M. Alhassan.
-
 [Current release: v1.0.2](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.2) · [Frozen data: v1.0.1](https://github.com/AzizAlhassan-ai/Does-Local-Street-Permeability-Relieve-the-Major-Roads/releases/tag/v1.0.1) · [Reproduction instructions](REPRODUCING.md) · [Data dictionary](DATA_DICTIONARY.md) · [Data licences](DATA_LICENSES.md)
 
 ## Study
